@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "appearance": {
+    "alignment": "end",
+    "icon-size": 20,
+    "show-labels": false,
+    "spacing": 2
+  },
+  "buttons": [
+    {
+      "id": "cut",
+      "label": "Ausschneiden",
+      "icon": "edit-cut-symbolic",
+      "shortcut": "<Control>x"
+    },
+    {
+      "id": "copy",
+      "label": "Kopieren",
+      "icon": "edit-copy-symbolic",
+      "shortcut": "<Control>c"
+    },
+    {
+      "id": "paste",
+      "label": "Einfügen",
+      "icon": "edit-paste-symbolic",
+      "shortcut": "<Control>v"
+    },
+    {
+      "id": "rename",
+      "label": "Umbenennen",
+      "icon": "document-edit-symbolic",
+      "shortcut": "F2"
+    },
+    {
+      "type": "separator"
+    },
+    {
+      "id": "trash",
+      "label": "In den Papierkorb verschieben",
+      "icon": "user-trash-symbolic",
+      "shortcut": "Delete"
+    }
+  ]
+}
