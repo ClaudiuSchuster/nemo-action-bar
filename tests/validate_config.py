@@ -3,9 +3,11 @@
 
 import copy
 import json
+import warnings
 from pathlib import Path
 
 import nemo_action_bar
+from gi.repository import Gtk
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,6 +42,35 @@ assert [
 assert next(
     entry for entry in validated["buttons"] if entry.get("id") == "rename"
 )["action"] == "rename"
+
+# Nemo has multiple GtkActions named Copy. File actions must win over an
+# unrelated text/clipboard action even when that proxy is discovered first.
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    clipboard_group = Gtk.ActionGroup(name="ClipboardActions")
+    clipboard_copy = Gtk.Action(
+        name="Copy", label="Copy", tooltip=None, stock_id=None
+    )
+    clipboard_group.add_action(clipboard_copy)
+    file_group = Gtk.ActionGroup(name="DirViewActions")
+    file_copy = Gtk.Action(name="Copy", label="Copy", tooltip=None, stock_id=None)
+    file_group.add_action(file_copy)
+assert nemo_action_bar._prefer_action_groups(
+    [clipboard_copy, file_copy], nemo_action_bar.NEMO_FILE_ACTION_GROUPS
+) == [file_copy]
+assert nemo_action_bar._prefer_action_groups(
+    [clipboard_copy], nemo_action_bar.NEMO_FILE_ACTION_GROUPS
+) == [clipboard_copy]
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    activated = []
+    file_copy.set_sensitive(False)
+    file_copy.connect("activate", lambda _action: activated.append(True))
+    nemo_action_bar._activate_with_current_selection(file_copy)
+    assert activated == [True]
+    assert not file_copy.get_sensitive()
+assert nemo_action_bar.FORCE_LAZY_ACTIONS == {"undo", "redo"}
 
 # Existing shortcut-only user configurations remain valid.
 legacy = copy.deepcopy(CONFIG)

@@ -22,9 +22,10 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
+gi.require_version("Atk", "1.0")
 gi.require_version("Nemo", "3.0")
 
-from gi.repository import Gdk, Gio, GLib, GObject, Gtk, Nemo
+from gi.repository import Atk, Gdk, Gio, GLib, GObject, Gtk, Nemo
 
 
 CONFIG_PATH = Path(
@@ -200,6 +201,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
 }
 
 MAX_BUTTONS = 32
+NEMO_FILE_ACTION_GROUPS = ("DirViewActions",)
+# Nemo refreshes these states when its menus are updated. The action callbacks
+# still consult the live undo manager, so activating a stale-insensitive proxy
+# is safe and more reliable than synthesizing Ctrl+Z/Ctrl+Y.
+FORCE_LAZY_ACTIONS = frozenset({"undo", "redo"})
 MONITORED_EVENTS = {
     Gio.FileMonitorEvent.CHANGED,
     Gio.FileMonitorEvent.CHANGES_DONE_HINT,
@@ -208,6 +214,35 @@ MONITORED_EVENTS = {
     Gio.FileMonitorEvent.MOVED_IN,
     Gio.FileMonitorEvent.MOVED_OUT,
 }
+
+
+def _prefer_action_groups(
+    actions: list[Gtk.Action], group_names: tuple[str, ...]
+) -> list[Gtk.Action]:
+    """Keep actions from Nemo's requested groups when they are available."""
+
+    if not group_names:
+        return actions
+
+    preferred = []
+    for action in actions:
+        action_group = action.get_property("action-group")
+        if action_group is not None and action_group.get_name() in group_names:
+            preferred.append(action)
+    return preferred or actions
+
+
+def _activate_with_current_selection(action: Gtk.Action) -> None:
+    """Activate a Nemo view action even when its lazy menu state is stale."""
+
+    was_sensitive = action.get_sensitive()
+    if not was_sensitive:
+        action.set_sensitive(True)
+    try:
+        action.activate()
+    finally:
+        if not was_sensitive:
+            action.set_sensitive(False)
 
 
 def _fail(message: str) -> None:
@@ -466,11 +501,27 @@ class ActionBar(Gtk.Box):
                 self._copy_selected_paths()
                 return GLib.SOURCE_REMOVE
 
-            action = self._find_nemo_action(definition["names"])
+            action = self._find_nemo_action(
+                definition["names"], NEMO_FILE_ACTION_GROUPS
+            )
             if action is not None:
                 if action.get_sensitive():
                     action.activate()
-                return GLib.SOURCE_REMOVE
+                    return GLib.SOURCE_REMOVE
+                if action_id in FORCE_LAZY_ACTIONS:
+                    _activate_with_current_selection(action)
+                    return GLib.SOURCE_REMOVE
+                if not keyval:
+                    if (
+                        action_id != "open-admin"
+                        and self._focused_selection_count() == 0
+                    ):
+                        self._show_unavailable(
+                            "Bitte zuerst mindestens eine Datei auswählen."
+                        )
+                        return GLib.SOURCE_REMOVE
+                    _activate_with_current_selection(action)
+                    return GLib.SOURCE_REMOVE
 
         if keyval and modifiers is not None:
             return self._activate_shortcut(keyval, modifiers)
@@ -480,7 +531,11 @@ class ActionBar(Gtk.Box):
         self._show_unavailable("Diese Nemo-Aktion ist gerade nicht verfügbar.", detail)
         return GLib.SOURCE_REMOVE
 
-    def _find_nemo_action(self, names: tuple[str, ...]) -> Gtk.Action | None:
+    def _find_nemo_action(
+        self,
+        names: tuple[str, ...],
+        preferred_groups: tuple[str, ...] = (),
+    ) -> Gtk.Action | None:
         matches: dict[str, list[Gtk.Action]] = {name: [] for name in names}
         action_groups: list[Gtk.ActionGroup] = []
         for widget in self._walk_widgets(self._window):
@@ -506,6 +561,7 @@ class ActionBar(Gtk.Box):
                     matches[name].append(action)
 
         ordered = [action for name in names for action in matches[name]]
+        ordered = _prefer_action_groups(ordered, preferred_groups)
         for action in ordered:
             if action.get_visible() and action.get_sensitive():
                 return action
@@ -517,13 +573,12 @@ class ActionBar(Gtk.Box):
     @staticmethod
     def _walk_widgets(root: Gtk.Widget):
         stack = [root]
-        seen: set[int] = set()
+        seen: set[Gtk.Widget] = set()
         while stack:
             widget = stack.pop()
-            identity = id(widget)
-            if identity in seen:
+            if widget in seen:
                 continue
-            seen.add(identity)
+            seen.add(widget)
             yield widget
 
             if isinstance(widget, Gtk.MenuItem):
@@ -538,12 +593,24 @@ class ActionBar(Gtk.Box):
                 pass
 
     def _copy_selected_paths(self) -> None:
-        action = self._find_nemo_action(("Copy",))
-        if action is None or not action.get_sensitive():
+        if self._focused_selection_count() == 0:
             self._show_unavailable("Bitte zuerst mindestens eine Datei auswählen.")
             return
 
-        action.activate()
+        action = self._find_nemo_action(("Copy",), NEMO_FILE_ACTION_GROUPS)
+        if action is not None:
+            # Nemo updates GtkAction sensitivity lazily with its Edit/context
+            # menu. Its callback reads the live selection from NemoView.
+            _activate_with_current_selection(action)
+        else:
+            # Some Nemo builds do not expose DirViewActions through their menu
+            # proxies. The native Ctrl+C binding reaches the focused view and
+            # produces the same URI clipboard payload.
+            keyval, modifiers = Gtk.accelerator_parse(
+                ACTION_DEFINITIONS["copy"]["shortcut"]
+            )
+            self._activate_shortcut(keyval, modifiers)
+
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         uris = clipboard.wait_for_uris() or []
         if not uris:
@@ -557,6 +624,21 @@ class ActionBar(Gtk.Box):
         text = "\n".join(paths)
         clipboard.set_text(text, -1)
         clipboard.store()
+
+    def _focused_selection_count(self) -> int | None:
+        """Return the active file view's ATK selection count when available."""
+
+        widget = self._window.get_focus()
+        seen: set[Gtk.Widget] = set()
+        while isinstance(widget, Gtk.Widget) and widget not in seen:
+            seen.add(widget)
+            accessible = widget.get_accessible()
+            if isinstance(accessible, Atk.Selection):
+                return accessible.get_selection_count()
+            if widget is self._window:
+                break
+            widget = widget.get_parent()
+        return None
 
     def _show_unavailable(self, message: str, detail: str | None = None) -> None:
         dialog = Gtk.MessageDialog(
