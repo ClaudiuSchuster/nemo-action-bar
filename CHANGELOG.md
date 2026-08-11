@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — 2026-08-11
 
 - Keep root, favorite and archive actions available but hide them by default.
 - Add a real-window README screenshot of the 14-button default layout while
