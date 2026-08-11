@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Keep root, favorite and archive actions available but hide them by default.
+- Add a real-window README screenshot of the 14-button default layout while
+  retaining the complete 18-action examples.
 - Fix **Copy paths** incorrectly reporting an empty selection by resolving
   Nemo's current `DirViewActions/Copy` action instead of an unrelated GTK
   clipboard action.
