@@ -10,7 +10,7 @@ and the trash.
 The same default layout in a real Nemo window, together with Nemo's original
 toolbar and the [active-window highlight](https://github.com/ClaudiuSchuster/cinnamon-active-window-highlight):
 
-![Nemo Action Bar in a complete highlighted Nemo window](docs/nemo-action-bar-context-highlight.png)
+![Nemo Action Bar in a complete highlighted Nemo window](docs/nemo-action-bar-context-complete.png)
 
 Nemo does not expose a public hook for third-party buttons in its built-in
 toolbar. This extension therefore uses Nemo's supported Python
