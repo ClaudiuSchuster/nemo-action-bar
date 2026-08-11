@@ -8,7 +8,7 @@ and the trash.
 ![Nemo Action Bar with its default power-button layout](docs/nemo-action-bar-compact.png)
 
 The same default layout in a real Nemo window, together with Nemo's original
-toolbar and the active-window highlight:
+toolbar and the [active-window highlight](https://github.com/ClaudiuSchuster/cinnamon-active-window-highlight):
 
 ![Nemo Action Bar in a complete Nemo window](docs/nemo-action-bar-context-compact.png)
 
