@@ -183,12 +183,14 @@ DEFAULT_CONFIG: dict[str, Any] = {
             "label": "Archiv erstellen",
             "icon": "xsi-add-files-to-archive-symbolic",
             "action": "archive-create",
+            "enabled": False,
         },
         {
             "id": "archive-extract",
             "label": "Archiv hier entpacken",
             "icon": "xsi-extract-archive-symbolic",
             "action": "archive-extract",
+            "enabled": False,
         },
         {"type": "separator"},
         {

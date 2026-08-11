@@ -42,6 +42,11 @@ assert [
 assert next(
     entry for entry in validated["buttons"] if entry.get("id") == "rename"
 )["action"] == "rename"
+for archive_id in ("archive-create", "archive-extract"):
+    archive = next(
+        entry for entry in validated["buttons"] if entry.get("id") == archive_id
+    )
+    assert archive["enabled"] is False
 
 # Nemo has multiple GtkActions named Copy. File actions must win over an
 # unrelated text/clipboard action even when that proxy is discovered first.

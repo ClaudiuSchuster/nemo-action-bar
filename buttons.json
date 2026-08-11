@@ -105,13 +105,15 @@
       "id": "archive-create",
       "label": "Archiv erstellen",
       "icon": "xsi-add-files-to-archive-symbolic",
-      "action": "archive-create"
+      "action": "archive-create",
+      "enabled": false
     },
     {
       "id": "archive-extract",
       "label": "Archiv hier entpacken",
       "icon": "xsi-extract-archive-symbolic",
-      "action": "archive-extract"
+      "action": "archive-extract",
+      "enabled": false
     },
     { "type": "separator" },
     {
