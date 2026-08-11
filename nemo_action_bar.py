@@ -78,7 +78,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "version": 1,
     "appearance": {
         "alignment": "end",
-        "icon-size": 20,
+        "icon-size": 16,
         "show-labels": False,
         "spacing": 2,
     },
@@ -370,8 +370,8 @@ class ActionBar(Gtk.Box):
         )
         controls.set_margin_start(4)
         controls.set_margin_end(4)
-        controls.set_margin_top(2)
-        controls.set_margin_bottom(2)
+        controls.set_margin_top(1)
+        controls.set_margin_bottom(1)
 
         alignment = appearance["alignment"]
         if alignment == "start":

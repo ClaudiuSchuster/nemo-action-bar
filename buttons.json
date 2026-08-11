@@ -2,7 +2,7 @@
   "version": 1,
   "appearance": {
     "alignment": "end",
-    "icon-size": 20,
+    "icon-size": 16,
     "show-labels": false,
     "spacing": 2
   },
