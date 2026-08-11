@@ -93,13 +93,15 @@
       "id": "open-admin",
       "label": "Als Administrator öffnen",
       "icon": "dialog-password-symbolic",
-      "action": "open-admin"
+      "action": "open-admin",
+      "enabled": false
     },
     {
       "id": "favorite",
       "label": "Favorit umschalten",
       "icon": "xsi-favorite-symbolic",
-      "action": "favorite-toggle"
+      "action": "favorite-toggle",
+      "enabled": false
     },
     {
       "id": "archive-create",

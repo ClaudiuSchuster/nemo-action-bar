@@ -171,12 +171,14 @@ DEFAULT_CONFIG: dict[str, Any] = {
             "label": "Als Administrator öffnen",
             "icon": "dialog-password-symbolic",
             "action": "open-admin",
+            "enabled": False,
         },
         {
             "id": "favorite",
             "label": "Favorit umschalten",
             "icon": "xsi-favorite-symbolic",
             "action": "favorite-toggle",
+            "enabled": False,
         },
         {
             "id": "archive-create",

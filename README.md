@@ -2,8 +2,9 @@
 
 A configurable power bar above Nemo's file view. It provides 18 direct actions
 for creating folders, clipboard operations, undo/redo, selection and view
-controls, paths, terminal/admin access, favorites, archives and the trash. The
-two optional archive actions are shipped disabled by default.
+controls, paths, terminal/admin access, favorites, archives and the trash. Open
+as root, the favorite toggle and both optional archive actions are shipped
+disabled by default, leaving 14 buttons visible.
 
 ![Nemo Action Bar with its complete power-button layout](docs/nemo-action-bar-compact.png)
 
@@ -75,13 +76,13 @@ lines are intentionally not supported.
 | `archive-create` | Open File Roller's archive-creation dialog (`nemo-fileroller`) |
 | `archive-extract` | Extract the selected supported archive here (`nemo-fileroller`) |
 
-The shipped `archive-create` and `archive-extract` entries use
-`"enabled": false`. Change both values to `true` in your personal JSON to show
-the buttons without restarting Nemo.
+The shipped `open-admin`, `favorite-toggle`, `archive-create` and
+`archive-extract` entries use `"enabled": false`. Change the desired values to
+`true` in your personal JSON to show those buttons without restarting Nemo.
 
-The shipped configuration deliberately shows every action as a direct button.
-Copy `buttons.json` from the repository over your personal configuration if you
-want to adopt the current default layout after an update.
+The screenshots deliberately show the complete layout with all available
+actions. Copy `buttons.json` from the repository over your personal
+configuration if you want to adopt the current defaults after an update.
 
 ## Uninstall
 

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Keep both archive actions available but hide their buttons by default.
+- Keep root, favorite and archive actions available but hide them by default.
 - Fix **Copy paths** incorrectly reporting an empty selection by resolving
   Nemo's current `DirViewActions/Copy` action instead of an unrelated GTK
   clipboard action.
