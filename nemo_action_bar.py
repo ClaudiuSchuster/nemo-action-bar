@@ -3,9 +3,9 @@
 
 Nemo's public extension API cannot add buttons to its built-in toolbar.  A
 LocationWidgetProvider is therefore used to place a native GTK bar directly
-above the directory view.  Buttons activate Nemo's own keyboard accelerators,
-so selection handling, confirmation dialogs and file operations stay inside
-Nemo.
+above the directory view.  Buttons activate a small allowlist of Nemo's own
+GtkActions (with keyboard accelerators as compatibility fallbacks), so
+selection handling, confirmation dialogs and file operations stay inside Nemo.
 """
 
 from __future__ import annotations
@@ -34,6 +34,39 @@ CONFIG_PATH = Path(
     )
 )
 
+# Public, stable identifiers accepted by buttons.json.  The GtkAction names are
+# Nemo's internal names, not user-controlled command lines.  Multiple names let
+# a single toolbar button follow stateful actions such as Favorite/Unfavorite.
+ACTION_DEFINITIONS: dict[str, dict[str, Any]] = {
+    "new-folder": {"names": ("New Folder",), "shortcut": "<Control><Shift>n"},
+    "cut": {"names": ("Cut",), "shortcut": "<Control>x"},
+    "copy": {"names": ("Copy",), "shortcut": "<Control>c"},
+    "paste": {"names": ("Paste",), "shortcut": "<Control>v"},
+    "duplicate": {"names": ("Duplicate",)},
+    "rename": {"names": ("Rename",), "shortcut": "F2"},
+    "undo": {"names": ("Undo",), "shortcut": "<Control>z"},
+    "redo": {"names": ("Redo",), "shortcut": "<Control>y"},
+    "properties": {"names": ("Properties",), "shortcut": "<Alt>Return"},
+    "select-all": {"names": ("Select All",), "shortcut": "<Control>a"},
+    "show-hidden": {
+        "names": ("Show Hidden Files",),
+        "shortcut": "<Control>h",
+    },
+    "trash": {"names": ("Trash",), "shortcut": "Delete"},
+    "open-terminal": {
+        "names": ("OpenInTerminal",),
+        "shortcut": "<Shift>F4",
+    },
+    "open-admin": {"names": ("OpenAsRoot",)},
+    "favorite-toggle": {"names": ("Favorite File", "Unfavorite File")},
+    "archive-create": {"names": ("NemoFr::add",), "requires": "nemo-fileroller"},
+    "archive-extract": {
+        "names": ("NemoFr::extract_here",),
+        "requires": "nemo-fileroller",
+    },
+    "copy-path": {"handler": "copy-path"},
+}
+
 DEFAULT_CONFIG: dict[str, Any] = {
     "version": 1,
     "appearance": {
@@ -44,35 +77,117 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "buttons": [
         {
+            "id": "new-folder",
+            "label": "Neuer Ordner",
+            "icon": "folder-new-symbolic",
+            "action": "new-folder",
+        },
+        {"type": "separator"},
+        {
             "id": "cut",
             "label": "Ausschneiden",
             "icon": "edit-cut-symbolic",
-            "shortcut": "<Control>x",
+            "action": "cut",
         },
         {
             "id": "copy",
             "label": "Kopieren",
             "icon": "edit-copy-symbolic",
-            "shortcut": "<Control>c",
+            "action": "copy",
         },
         {
             "id": "paste",
             "label": "Einfügen",
             "icon": "edit-paste-symbolic",
-            "shortcut": "<Control>v",
+            "action": "paste",
+        },
+        {
+            "id": "duplicate",
+            "label": "Duplizieren",
+            "icon": "edit-copy-symbolic",
+            "action": "duplicate",
         },
         {
             "id": "rename",
             "label": "Umbenennen",
             "icon": "document-edit-symbolic",
-            "shortcut": "F2",
+            "action": "rename",
+        },
+        {"type": "separator"},
+        {
+            "id": "undo",
+            "label": "Rückgängig",
+            "icon": "edit-undo-symbolic",
+            "action": "undo",
+        },
+        {
+            "id": "redo",
+            "label": "Wiederholen",
+            "icon": "edit-redo-symbolic",
+            "action": "redo",
+        },
+        {"type": "separator"},
+        {
+            "id": "properties",
+            "label": "Eigenschaften",
+            "icon": "document-properties-symbolic",
+            "action": "properties",
+        },
+        {
+            "id": "select-all",
+            "label": "Alles auswählen",
+            "icon": "edit-select-all-symbolic",
+            "action": "select-all",
+        },
+        {
+            "id": "show-hidden",
+            "label": "Verborgene Dateien umschalten",
+            "icon": "view-reveal-symbolic",
+            "action": "show-hidden",
+        },
+        {"type": "separator"},
+        {
+            "id": "copy-path",
+            "label": "Pfade kopieren",
+            "icon": "insert-link-symbolic",
+            "action": "copy-path",
+        },
+        {
+            "id": "open-terminal",
+            "label": "Im Terminal öffnen",
+            "icon": "utilities-terminal-symbolic",
+            "action": "open-terminal",
+        },
+        {
+            "id": "open-admin",
+            "label": "Als Administrator öffnen",
+            "icon": "dialog-password-symbolic",
+            "action": "open-admin",
+        },
+        {
+            "id": "favorite",
+            "label": "Favorit umschalten",
+            "icon": "xsi-favorite-symbolic",
+            "action": "favorite-toggle",
+        },
+        {
+            "id": "archive-create",
+            "label": "Archiv erstellen",
+            "icon": "xsi-add-files-to-archive-symbolic",
+            "action": "archive-create",
+        },
+        {
+            "id": "archive-extract",
+            "label": "Archiv hier entpacken",
+            "icon": "xsi-extract-archive-symbolic",
+            "action": "archive-extract",
         },
         {"type": "separator"},
         {
             "id": "trash",
             "label": "In den Papierkorb verschieben",
             "icon": "user-trash-symbolic",
-            "shortcut": "Delete",
+            "action": "trash",
         },
     ],
 }
@@ -159,6 +274,7 @@ def validate_config(raw: Any) -> dict[str, Any]:
         button_id = item.get("id")
         label = item.get("label")
         icon = item.get("icon")
+        action = item.get("action")
         shortcut = item.get("shortcut")
         enabled = item.get("enabled", True)
 
@@ -166,12 +282,23 @@ def validate_config(raw: Any) -> dict[str, Any]:
             ("id", button_id, 64),
             ("label", label, 120),
             ("icon", icon, 160),
-            ("shortcut", shortcut, 80),
         ):
             if not isinstance(value, str) or not value.strip():
                 _fail(f"buttons[{index}].{field_name} muss Text enthalten")
             if len(value) > maximum:
                 _fail(f"buttons[{index}].{field_name} ist zu lang")
+        if action is not None:
+            if not isinstance(action, str) or action not in ACTION_DEFINITIONS:
+                _fail(
+                    f"buttons[{index}].action ist nicht unterstützt: {action!r}"
+                )
+        if shortcut is not None:
+            if not isinstance(shortcut, str) or not shortcut.strip():
+                _fail(f"buttons[{index}].shortcut muss Text enthalten")
+            if len(shortcut) > 80:
+                _fail(f"buttons[{index}].shortcut ist zu lang")
+        if action is None and shortcut is None:
+            _fail(f"buttons[{index}] benötigt action oder shortcut")
         if not isinstance(enabled, bool):
             _fail(f"buttons[{index}].enabled muss true oder false sein")
         if button_id in seen_ids:
@@ -184,6 +311,7 @@ def validate_config(raw: Any) -> dict[str, Any]:
                 "id": button_id,
                 "label": label,
                 "icon": icon,
+                "action": action,
                 "shortcut": shortcut,
                 "enabled": enabled,
             }
@@ -257,6 +385,7 @@ class ActionBar(Gtk.Box):
         button.set_can_focus(False)
         button.set_focus_on_click(False)
         button.get_style_context().add_class(Gtk.STYLE_CLASS_FLAT)
+        button.get_accessible().set_name(spec["label"])
 
         image = Gtk.Image.new_from_icon_name(spec["icon"], Gtk.IconSize.BUTTON)
         image.set_pixel_size(appearance["icon-size"])
@@ -268,26 +397,160 @@ class ActionBar(Gtk.Box):
         else:
             button.add(image)
 
-        keyval, modifiers = Gtk.accelerator_parse(spec["shortcut"])
-        if not keyval or not Gtk.accelerator_valid(keyval, modifiers):
-            button.set_sensitive(False)
-            button.set_tooltip_text(
-                f"{spec['label']} – ungültiges Kürzel: {spec['shortcut']}"
-            )
-            return button
+        action_id = spec.get("action")
+        definition = ACTION_DEFINITIONS.get(action_id, {})
+        shortcut = spec.get("shortcut") or definition.get("shortcut")
+        keyval = modifiers = None
+        if shortcut:
+            keyval, modifiers = Gtk.accelerator_parse(shortcut)
+            if not keyval or not Gtk.accelerator_valid(keyval, modifiers):
+                button.set_sensitive(False)
+                button.set_tooltip_text(
+                    f"{spec['label']} – ungültiges Kürzel: {shortcut}"
+                )
+                return button
 
-        shortcut_label = Gtk.accelerator_get_label(keyval, modifiers)
-        button.set_tooltip_text(f"{spec['label']}  ({shortcut_label})")
-        button.connect("clicked", self._queue_shortcut, keyval, modifiers)
+        tooltip = spec["label"]
+        if keyval:
+            tooltip += f"  ({Gtk.accelerator_get_label(keyval, modifiers)})"
+        if definition.get("requires"):
+            tooltip += f"  [{definition['requires']}]"
+        button.set_tooltip_text(tooltip)
+        button.connect(
+            "clicked",
+            self._queue_activation,
+            action_id,
+            keyval,
+            modifiers,
+        )
         return button
 
-    def _queue_shortcut(
+    def _queue_activation(
         self,
         _button: Gtk.Button,
-        keyval: int,
-        modifiers: Gdk.ModifierType,
+        action_id: str | None,
+        keyval: int | None,
+        modifiers: Gdk.ModifierType | None,
     ) -> None:
-        GLib.idle_add(self._activate_shortcut, keyval, modifiers)
+        GLib.idle_add(self._activate, action_id, keyval, modifiers)
+
+    def _activate(
+        self,
+        action_id: str | None,
+        keyval: int | None,
+        modifiers: Gdk.ModifierType | None,
+    ) -> bool:
+        if action_id:
+            definition = ACTION_DEFINITIONS[action_id]
+            if definition.get("handler") == "copy-path":
+                self._copy_selected_paths()
+                return GLib.SOURCE_REMOVE
+
+            action = self._find_nemo_action(definition["names"])
+            if action is not None:
+                if action.get_sensitive():
+                    action.activate()
+                return GLib.SOURCE_REMOVE
+
+        if keyval and modifiers is not None:
+            return self._activate_shortcut(keyval, modifiers)
+
+        dependency = ACTION_DEFINITIONS.get(action_id, {}).get("requires")
+        detail = f"Benötigtes Paket: {dependency}" if dependency else None
+        self._show_unavailable("Diese Nemo-Aktion ist gerade nicht verfügbar.", detail)
+        return GLib.SOURCE_REMOVE
+
+    def _find_nemo_action(self, names: tuple[str, ...]) -> Gtk.Action | None:
+        matches: dict[str, list[Gtk.Action]] = {name: [] for name in names}
+        action_groups: list[Gtk.ActionGroup] = []
+        for widget in self._walk_widgets(self._window):
+            if not isinstance(widget, Gtk.Activatable):
+                continue
+            action = widget.get_related_action()
+            if action is None:
+                continue
+            action_group = action.get_property("action-group")
+            if action_group is not None and action_group not in action_groups:
+                action_groups.append(action_group)
+            name = action.get_name()
+            if name in matches and action not in matches[name]:
+                matches[name].append(action)
+
+        # Several useful Nemo actions only have context-menu proxies.  Once any
+        # proxy from their GtkActionGroup is known, query the group directly so
+        # hidden menu preferences do not disable the toolbar button.
+        for action_group in action_groups:
+            for name in names:
+                action = action_group.get_action(name)
+                if action is not None and action not in matches[name]:
+                    matches[name].append(action)
+
+        ordered = [action for name in names for action in matches[name]]
+        for action in ordered:
+            if action.get_visible() and action.get_sensitive():
+                return action
+        for action in ordered:
+            if action.get_visible():
+                return action
+        return ordered[0] if ordered else None
+
+    @staticmethod
+    def _walk_widgets(root: Gtk.Widget):
+        stack = [root]
+        seen: set[int] = set()
+        while stack:
+            widget = stack.pop()
+            identity = id(widget)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            yield widget
+
+            if isinstance(widget, Gtk.MenuItem):
+                submenu = widget.get_submenu()
+                if submenu is not None:
+                    stack.append(submenu)
+            if isinstance(widget, Gtk.Container):
+                stack.extend(widget.get_children())
+            try:
+                stack.extend(Gtk.Menu.get_for_attach_widget(widget))
+            except (TypeError, RuntimeError):
+                pass
+
+    def _copy_selected_paths(self) -> None:
+        action = self._find_nemo_action(("Copy",))
+        if action is None or not action.get_sensitive():
+            self._show_unavailable("Bitte zuerst mindestens eine Datei auswählen.")
+            return
+
+        action.activate()
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        uris = clipboard.wait_for_uris() or []
+        if not uris:
+            self._show_unavailable("Die ausgewählten Pfade konnten nicht gelesen werden.")
+            return
+
+        paths = []
+        for uri in uris:
+            file = Gio.File.new_for_uri(uri)
+            paths.append(file.get_path() or file.get_parse_name())
+        text = "\n".join(paths)
+        clipboard.set_text(text, -1)
+        clipboard.store()
+
+    def _show_unavailable(self, message: str, detail: str | None = None) -> None:
+        dialog = Gtk.MessageDialog(
+            transient_for=self._window,
+            modal=False,
+            destroy_with_parent=True,
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.CLOSE,
+            text=message,
+        )
+        if detail:
+            dialog.format_secondary_text(detail)
+        dialog.connect("response", lambda current, _response: current.destroy())
+        dialog.show()
 
     def _activate_shortcut(
         self, keyval: int, modifiers: Gdk.ModifierType

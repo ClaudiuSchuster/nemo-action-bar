@@ -8,37 +8,117 @@
   },
   "buttons": [
     {
+      "id": "new-folder",
+      "label": "Neuer Ordner",
+      "icon": "folder-new-symbolic",
+      "action": "new-folder"
+    },
+    { "type": "separator" },
+    {
       "id": "cut",
       "label": "Ausschneiden",
       "icon": "edit-cut-symbolic",
-      "shortcut": "<Control>x"
+      "action": "cut"
     },
     {
       "id": "copy",
       "label": "Kopieren",
       "icon": "edit-copy-symbolic",
-      "shortcut": "<Control>c"
+      "action": "copy"
     },
     {
       "id": "paste",
       "label": "Einfügen",
       "icon": "edit-paste-symbolic",
-      "shortcut": "<Control>v"
+      "action": "paste"
+    },
+    {
+      "id": "duplicate",
+      "label": "Duplizieren",
+      "icon": "edit-copy-symbolic",
+      "action": "duplicate"
     },
     {
       "id": "rename",
       "label": "Umbenennen",
       "icon": "document-edit-symbolic",
-      "shortcut": "F2"
+      "action": "rename"
+    },
+    { "type": "separator" },
+    {
+      "id": "undo",
+      "label": "Rückgängig",
+      "icon": "edit-undo-symbolic",
+      "action": "undo"
     },
     {
-      "type": "separator"
+      "id": "redo",
+      "label": "Wiederholen",
+      "icon": "edit-redo-symbolic",
+      "action": "redo"
     },
+    { "type": "separator" },
+    {
+      "id": "properties",
+      "label": "Eigenschaften",
+      "icon": "document-properties-symbolic",
+      "action": "properties"
+    },
+    {
+      "id": "select-all",
+      "label": "Alles auswählen",
+      "icon": "edit-select-all-symbolic",
+      "action": "select-all"
+    },
+    {
+      "id": "show-hidden",
+      "label": "Verborgene Dateien umschalten",
+      "icon": "view-reveal-symbolic",
+      "action": "show-hidden"
+    },
+    { "type": "separator" },
+    {
+      "id": "copy-path",
+      "label": "Pfade kopieren",
+      "icon": "insert-link-symbolic",
+      "action": "copy-path"
+    },
+    {
+      "id": "open-terminal",
+      "label": "Im Terminal öffnen",
+      "icon": "utilities-terminal-symbolic",
+      "action": "open-terminal"
+    },
+    {
+      "id": "open-admin",
+      "label": "Als Administrator öffnen",
+      "icon": "dialog-password-symbolic",
+      "action": "open-admin"
+    },
+    {
+      "id": "favorite",
+      "label": "Favorit umschalten",
+      "icon": "xsi-favorite-symbolic",
+      "action": "favorite-toggle"
+    },
+    {
+      "id": "archive-create",
+      "label": "Archiv erstellen",
+      "icon": "xsi-add-files-to-archive-symbolic",
+      "action": "archive-create"
+    },
+    {
+      "id": "archive-extract",
+      "label": "Archiv hier entpacken",
+      "icon": "xsi-extract-archive-symbolic",
+      "action": "archive-extract"
+    },
+    { "type": "separator" },
     {
       "id": "trash",
       "label": "In den Papierkorb verschieben",
       "icon": "user-trash-symbolic",
-      "shortcut": "Delete"
+      "action": "trash"
     }
   ]
 }
