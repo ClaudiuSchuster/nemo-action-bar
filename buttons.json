@@ -35,7 +35,7 @@
     {
       "id": "duplicate",
       "label": "Duplizieren",
-      "icon": "edit-copy-symbolic",
+      "icon": "nemo-action-bar-duplicate-symbolic",
       "action": "duplicate"
     },
     {

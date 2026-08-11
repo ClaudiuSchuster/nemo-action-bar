@@ -33,6 +33,13 @@ CONFIG_PATH = Path(
         str(Path.home() / ".config" / "nemo-action-bar" / "buttons.json"),
     )
 )
+DATA_ROOT = Path(
+    os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local" / "share"))
+)
+ICON_SEARCH_PATHS = (
+    Path(__file__).resolve().parent / "icons",
+    DATA_ROOT / "nemo-action-bar" / "icons",
+)
 
 # Public, stable identifiers accepted by buttons.json.  The GtkAction names are
 # Nemo's internal names, not user-controlled command lines.  Multiple names let
@@ -104,7 +111,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         {
             "id": "duplicate",
             "label": "Duplizieren",
-            "icon": "edit-copy-symbolic",
+            "icon": "nemo-action-bar-duplicate-symbolic",
             "action": "duplicate",
         },
         {
@@ -334,9 +341,22 @@ class ActionBar(Gtk.Box):
     def __init__(self, window: Gtk.Window, config: dict[str, Any]) -> None:
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL)
         self._window = window
+        self._register_custom_icons()
         self.set_hexpand(True)
         self.get_style_context().add_class(Gtk.STYLE_CLASS_TOOLBAR)
         self.rebuild(config)
+
+    @staticmethod
+    def _register_custom_icons() -> None:
+        theme = Gtk.IconTheme.get_default()
+        if theme is None:
+            return
+        known_paths = set(theme.get_search_path())
+        for path in ICON_SEARCH_PATHS:
+            path_text = str(path)
+            if path.is_dir() and path_text not in known_paths:
+                theme.append_search_path(path_text)
+                known_paths.add(path_text)
 
     def rebuild(self, config: dict[str, Any]) -> None:
         for child in self.get_children():

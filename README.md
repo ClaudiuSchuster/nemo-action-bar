@@ -43,7 +43,7 @@ installed GTK icon name and one of the supported action IDs:
 {
   "id": "duplicate",
   "label": "Duplicate",
-  "icon": "edit-copy-symbolic",
+  "icon": "nemo-action-bar-duplicate-symbolic",
   "action": "duplicate"
 }
 ```
