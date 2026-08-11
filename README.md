@@ -6,7 +6,8 @@ controls, paths, terminal/admin access, favorites, archives and the trash. Open
 as root, the favorite toggle and both optional archive actions are shipped
 disabled by default, leaving 14 buttons visible.
 
-The current default layout in a real Nemo window:
+The current default layout in a real Nemo window, together with Nemo's original
+toolbar and the [active-window highlight](https://github.com/ClaudiuSchuster/cinnamon-active-window-highlight):
 
 ![Nemo Action Bar with its 14-button default layout](docs/nemo-action-bar-default-context.png)
 
