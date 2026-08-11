@@ -5,12 +5,12 @@ A configurable power bar above Nemo's file view. The default layout provides
 selection and view controls, paths, terminal/admin access, favorites, archives
 and the trash.
 
-![Nemo Action Bar with its default power-button layout](docs/nemo-action-bar.png)
+![Nemo Action Bar with its default power-button layout](docs/nemo-action-bar-compact.png)
 
 The same default layout in a real Nemo window, together with Nemo's original
 toolbar and the active-window highlight:
 
-![Nemo Action Bar in a complete Nemo window](docs/nemo-action-bar-context.png)
+![Nemo Action Bar in a complete Nemo window](docs/nemo-action-bar-context-compact.png)
 
 Nemo does not expose a public hook for third-party buttons in its built-in
 toolbar. This extension therefore uses Nemo's supported Python
