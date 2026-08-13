@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.1 — 2026-08-13
+## 1.1.1 — 2026-08-14
 
 - Do not display the action bar on Nemo's desktop surface; regular file-manager
   windows, including the actual Desktop folder, remain unchanged.
