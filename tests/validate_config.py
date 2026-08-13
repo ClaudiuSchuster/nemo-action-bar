@@ -82,6 +82,15 @@ with warnings.catch_warnings():
     assert not file_copy.get_sensitive()
 assert nemo_action_bar.FORCE_LAZY_ACTIONS == {"undo", "redo"}
 
+# Nemo's desktop is a virtual location, while browsing the user's Desktop
+# directory in a regular window remains a normal file:// location.
+assert nemo_action_bar._is_nemo_desktop_location("x-nemo-desktop:")
+assert nemo_action_bar._is_nemo_desktop_location("X-NEMO-DESKTOP:///")
+assert not nemo_action_bar._is_nemo_desktop_location(
+    "file:///home/example/Desktop"
+)
+assert not nemo_action_bar._is_nemo_desktop_location("file:///tmp")
+
 # Existing shortcut-only user configurations remain valid.
 legacy = copy.deepcopy(CONFIG)
 legacy["buttons"] = [

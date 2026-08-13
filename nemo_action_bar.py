@@ -206,6 +206,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
 
 MAX_BUTTONS = 32
 NEMO_FILE_ACTION_GROUPS = ("DirViewActions",)
+NEMO_DESKTOP_URI_PREFIX = "x-nemo-desktop:"
 # Nemo refreshes these states when its menus are updated. The action callbacks
 # still consult the live undo manager, so activating a stale-insensitive proxy
 # is safe and more reliable than synthesizing Ctrl+Z/Ctrl+Y.
@@ -234,6 +235,12 @@ def _prefer_action_groups(
         if action_group is not None and action_group.get_name() in group_names:
             preferred.append(action)
     return preferred or actions
+
+
+def _is_nemo_desktop_location(uri: str) -> bool:
+    """Return whether URI identifies Nemo's desktop surface, not a folder."""
+
+    return uri.casefold().startswith(NEMO_DESKTOP_URI_PREFIX)
 
 
 def _activate_with_current_selection(action: Gtk.Action) -> None:
@@ -690,7 +697,12 @@ class NemoActionBarProvider(GObject.GObject, Nemo.LocationWidgetProvider):
         self._config = self._load_or_default()
         self._monitor = self._create_monitor()
 
-    def get_widget(self, _uri: str, window: Gtk.Window) -> Gtk.Widget:
+    def get_widget(self, uri: str, window: Gtk.Window) -> Gtk.Widget | None:
+        # Nemo asks LocationWidgetProviders for its desktop view too. Returning
+        # None is the supported way to decline a location-specific widget.
+        if _is_nemo_desktop_location(uri):
+            return None
+
         bar = ActionBar(window, self._config)
         self._bars.append(weakref.ref(bar))
         return bar

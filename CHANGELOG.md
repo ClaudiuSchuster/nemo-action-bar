@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1 — 2026-08-13
+
+- Do not display the action bar on Nemo's desktop surface; regular file-manager
+  windows, including the actual Desktop folder, remain unchanged.
+
 ## 1.1.0 — 2026-08-11
 
 - Keep root, favorite and archive actions available but hide them by default.

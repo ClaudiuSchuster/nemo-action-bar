@@ -28,6 +28,9 @@ or a known keyboard accelerator. File selection, capability checks,
 confirmation dialogs and file operations therefore remain under Nemo's
 control. No configurable shell commands are executed.
 
+The bar is intentionally omitted from Nemo's desktop surface. Opening the
+actual Desktop folder in a regular Nemo window still shows it normally.
+
 ## Requirements and installation
 
 - Nemo 5 or newer
